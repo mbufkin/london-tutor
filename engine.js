@@ -153,6 +153,15 @@
     // Default to whatever was last active (used by Replay).
     S.activeLesson = lessonObj || S.activeLesson;
     S.lesson = S.activeLesson;
+
+    // Randomize answer order. Authoring models (and our hand-authored data) tend
+    // to list the correct option FIRST, which makes "always pick A" win. We never
+    // trust the source to vary it — we shuffle each check's options in place, once
+    // per play. `correct` travels with the option, so scoring is unaffected.
+    S.lesson.steps.forEach((step) => {
+      if (step.type === "check" && Array.isArray(step.options)) shuffle(step.options);
+    });
+
     S.legend = buildLegend(S.lesson);
 
     S.telemetry = new Telemetry(S.lesson.id);
@@ -307,6 +316,15 @@
 
   function markMissed(step) {
     if (!S.missedSteps.includes(step)) S.missedSteps.push(step);
+  }
+
+  // Fisher-Yates in-place shuffle (unbiased; each permutation equally likely).
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
 
   function showHint() {
